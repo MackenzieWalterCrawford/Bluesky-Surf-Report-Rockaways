@@ -3,6 +3,7 @@ class BlueskyApi:
     def __init__(self):
         self.now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
+
     def create_post(self, post_text:str):
         """
         Function to create a payload that includes the text to post to BlueSky
@@ -15,6 +16,7 @@ class BlueskyApi:
             "text": post_text,
             "createdAt": self.now,
         }
+
 
     def open_session(self, bluesky_handle:str, bluesky_app_password:str):
 
