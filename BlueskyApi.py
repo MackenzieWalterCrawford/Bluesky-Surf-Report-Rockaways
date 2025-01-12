@@ -1,3 +1,7 @@
+import requests
+from datetime import datetime, timezone
+import json
+
 class BlueskyApi:
     
     def __init__(self):
@@ -32,7 +36,7 @@ class BlueskyApi:
 
         resp = requests.post(
             "https://bsky.social/xrpc/com.atproto.server.createSession",
-            json={"identifier": BLUESKY_HANDLE, "password": BLUESKY_APP_PASSWORD},
+            json={"identifier": bluesky_handle, "password": bluesky_app_password},
         )
         resp.raise_for_status()
         session = resp.json()
