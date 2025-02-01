@@ -1,33 +1,45 @@
 name: push code to lambda
 on: [push]
+
+env:
+  
+  AWS_REGION : <"us-east-1"> #Change to reflect your Region
+
+permissions:
+      id-token: write   # This is required for requesting the JWT
+      contents: read    # This is required for actions/checkout
+
 jobs:
-  deploy_source:
-    name: build and deploy lambda
-    strategy:
-      matrix:
-        node-version: [18.x]
+  AssumeRoleAndCallIdentity:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+      - name: Git clone the repository
+        uses: actions/checkout@v3
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1.7.0
         with:
-          node-version: ${{ matrix.node-version }}
-      - name: npm install and build
+          role-to-assume: <arn:aws:iam::111122223333:role/GitHubAction-AssumeRoleWithAction> #change to reflect your IAM role’s ARN
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+      # Hello from AWS: WhoAmI
+      - name: Sts GetCallerIdentity
         run: |
-          npm ci
-          npm run build --if-present
-        env:
-          CI: true
-      - name: zip
-        uses: montudor/action-zip@v0.1.0
-        with:
-          args: zip -qq -r ./bundle.zip ./
-      - name: default deploy
-        uses: appleboy/lambda-action@master
-        with:
-          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_region: us-east-1
-          function_name: lambda_surf_report
-          zip_file: bundle.zip
+          aws sts get-caller-identity
+
+  deploy:
+    name: deploy lambda function
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: AWS Lambda Deploy
+      if: github.ref == 'refs/heads/master'
+      uses: appleboy/lambda-action@v0.2.0
+      with:
+        role-to-assume: <arn:aws:iam::111122223333:role/GitHubAction-AssumeRoleWithAction>
+        role-session-name: GitHub_to_AWS_via_FederatedOIDC
+        aws_region: ${{ env.AWS_REGION }}
+        function_name: gorush
+        zip_file: output.zip
+        dry_run: true
+
+
