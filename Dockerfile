@@ -4,3 +4,6 @@ WORKDIR /usr/local/app
 # Install the application dependencies
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Command to run when the container starts
+CMD ["app.lambda_handler"]
